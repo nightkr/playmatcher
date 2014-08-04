@@ -1,0 +1,9 @@
+@(form: Form[ClientInfo])
+
+@import helper.{form => _, _}
+
+@helper.form(action = routes.Application.connect()) {
+    @inputText(form("name"))
+    @inputText(form("games[]"))
+    <input type="submit"/>
+}
