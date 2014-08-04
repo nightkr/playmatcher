@@ -1,6 +1,6 @@
 //logLevel := Level.Warn
 
-lazy val handlebarsPlugin = RootProject(uri("git://github.com/Amadeus82/sbt-handlebars.git#ed2a0670c00e25245a90afb5ac88fed4ca2b0f6b"))
+lazy val handlebarsPlugin = RootProject(file("lib/sbt-handlebars"))
 
 lazy val playmatcherBuild = (project in file(".")).dependsOn(handlebarsPlugin)
 
