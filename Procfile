@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/playmatcher --Dhttp.port=$PORT
+web: target/universal/stage/bin/playmatcher . -Dhttp.port=$PORT
