@@ -10,7 +10,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
   "org.webjars" % "handlebars" % "2.0.0-alpha.2",
   "org.webjars" % "requirejs" % "2.1.14-1",
-  "org.webjars" % "jquery" % "2.1.1"
+  "org.webjars" % "jquery" % "2.1.1",
+  "com.typesafe.play" %% "play-slick" % "0.8.0-RC3"
 )
 
 sourceGenerators in Assets <+= handlebars
