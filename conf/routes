@@ -3,10 +3,13 @@
 # ~~~~
 
 # Home page
-GET        /                    controllers.Application.index
+GET        /                            controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file        controllers.Assets.at(path="/public", file)
+GET        /assets/*file                controllers.Assets.at(path="/public", file)
 
-GET        /match              controllers.Application.connect
-GET        /connect             controllers.Application.connectWS
+GET        /match                       controllers.Application.connect
+GET        /connect                     controllers.Application.connectWS
+
+GET        /login/steam                 controllers.SteamAuthentication.steamLogin(returnTo: Option[String] ?= None)
+GET        /login/steam/callback        controllers.SteamAuthentication.steamCallback(returnTo)

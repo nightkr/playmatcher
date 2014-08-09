@@ -1,18 +1,30 @@
 package models
 
-import play.api.db.slick.Config.driver.simple._
+import org.virtuslab.unicorn.LongUnicornPlay._
+import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 
 import scala.slick.lifted.ProvenShape
 
-case class Identity(id: Int, userID: Int, kind: String, value: String)
+case class IdentityID(id: Long) extends AnyVal with BaseId
+object IdentityID extends IdCompanion[IdentityID]
 
-class Identities(tag: Tag) extends Table[Identity](tag, "IDENTITIES") {
-  def id = column[Int]("ID", O.PrimaryKey, O.AutoInc)
-  def userID = column[Int]("USER_ID")
+case class Identity(id: Option[IdentityID], userID: UserID, kind: String, value: String) extends WithId[IdentityID]
+
+object Identity {
+  object Kind {
+    val STEAM = "STEAM"
+  }
+}
+
+class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "IDENTITIES") {
+  def userID = column[UserID]("USER_ID")
   def kind = column[String]("KIND")
   def value = column[String]("VALUE")
 
-  override def * : ProvenShape[Identity] = (id, userID, kind, value) <> (Identity.tupled, Identity.unapply)
+  def user = foreignKey("USER", userID, Users)(_.id)
+  def userKindIndex = index("USER_KIND_INDEX", (userID, kind), unique = true)
+
+  override def * : ProvenShape[Identity] = (id.?, userID, kind, value) <> ((Identity.apply _).tupled, Identity.unapply)
 }
 
 object Identities extends TableQuery[Identities](new Identities(_))

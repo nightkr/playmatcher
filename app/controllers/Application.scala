@@ -1,13 +1,18 @@
 package controllers
 
 import actors.WSClientActor
-import models.{ClientInfo, Game}
+import models._
+import play.api.Logger
+import play.api.db.slick.DB
 import utils._
 import play.api.Play.current
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.JsValue
-import play.api.mvc.{Action, Controller, Result, WebSocket}
+import play.api.mvc._
+import play.api.libs.openid.{SteamOpenID, BaseOpenIDCompanion}
+import play.api.libs.concurrent.Execution.Implicits._
+import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 
 
 object Application extends Controller {
@@ -15,7 +20,7 @@ object Application extends Controller {
   val clientInfoForm = Form(
     mapping(
       "name" -> nonEmptyText,
-      "games" -> seq(nonEmptyText.transform[Game](Game.apply, _.name))
+      "games" -> seq(nonEmptyText.transform[Game](Game(None, _), _.name))
     )(ClientInfo.apply)(ClientInfo.unapply)
   )
 
@@ -35,4 +40,65 @@ object Application extends Controller {
     WSClientActor.props(out, clientInfo)
   }
 
+}
+
+object SteamAuthentication extends Controller {
+  private def openIDRealm(implicit req: RequestHeader): Option[String] = Some(routes.Application.index().absoluteURL())
+
+  private val steamOpenID = "http://steamcommunity.com/openid"
+
+  def steamLogin(returnTo: Option[String]) = Action.async { implicit request =>
+    val realReturnTo = Seq(
+      returnTo,
+      request.headers.get("Referer"),
+      Some(routes.Application.index().url)
+    ).filter(_.isDefined).head.get
+    SteamOpenID().redirectURL(steamOpenID, routes.SteamAuthentication.steamCallback(realReturnTo).absoluteURL(), realm = openIDRealm)
+      .map(TemporaryRedirect)
+      .recover { case ex: Throwable =>
+        Logger.error("OpenID redirect retrieval failed", ex)
+        Redirect(realReturnTo)
+          .flashing("error" -> "OpenID authentication failed")
+    }
+  }
+
+  def steamCallback(returnTo: String) = Action.async { implicit request =>
+    SteamOpenID().verifiedId.map(Some.apply).recover { case ex: Throwable =>
+        Logger.error(s"OpenID verification failed: ${request.uri}", ex)
+        None
+    }.map {
+      case Some(openID) =>
+        DB.withTransaction { implicit session =>
+          val linkedUser = for {
+            i <- Identities
+            if i.kind === Identity.Kind.STEAM
+            if i.value === openID.id
+            u <- i.user
+          } yield u.id
+
+          val uid = linkedUser.firstOption match {
+            case Some(id) =>
+              id
+            case None =>
+              val currentUserID: UserID = Users.current.map(_.id).firstOption match {
+                case Some(id) =>
+                  id
+                case None =>
+                  Users.returning(Users.map(_.id)) += User(None)
+              }
+
+              val identity = Identity(None, currentUserID, Identity.Kind.STEAM, openID.id)
+              Identities.insert(identity)
+
+              currentUserID
+          }
+
+          Redirect(returnTo)
+            .withUser(uid)
+        }
+      case None =>
+        Redirect(returnTo)
+          .flashing("error" -> "OpenID verification failed")
+    }
+  }
 }

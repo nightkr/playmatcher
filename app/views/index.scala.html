@@ -2,6 +2,8 @@
 
 @import helper.{form => _, _}
 
+<a href="@routes.SteamAuthentication.steamLogin()"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>
+
 @helper.form(action = routes.Application.connect()) {
     @inputText(form("name"))
     @inputText(form("games[]"))
