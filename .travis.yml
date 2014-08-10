@@ -1,3 +1,6 @@
 language: scala
+cache:
+  directories:
+  - $HOME/.ivy2/cache
 jdk: openjdk7
 script: sbt test
