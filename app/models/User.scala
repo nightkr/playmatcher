@@ -25,6 +25,27 @@ object Users extends TableQuery[Users](new Users(_)) {
   }
 
   def current(implicit req: RequestHeader): lifted.Query[Users, User, Seq] = this.filter(_.id === currentID)
+
+  def currentIDOrCreate()(implicit req: RequestHeader, session: Session): UserID =
+    Users.current.map(_.id).firstOption
+      .getOrElse(Users.returning(Users.map(_.id)) += User(None))
+
+  def getOrRegisterIDByIdentity(kind: String, value: String)(implicit req: RequestHeader, session: Session): UserID = {
+    getExistingIDByIdentity(kind, value).firstOption.getOrElse(registerIdentity(kind, value))
+  }
+
+  def getExistingIDByIdentity(kind: String, value: String): lifted.Query[lifted.Column[UserID], UserID, Seq] = for {
+    i <- Identities
+    if i.kind === kind
+    if i.value === value
+    u <- i.user
+  } yield u.id
+  
+  def registerIdentity(kind: String, value: String)(implicit req: RequestHeader, session: Session): UserID = {
+    val uid = currentIDOrCreate()
+    Identities += Identity(None, uid, kind, value)
+    uid
+  }
 }
 
 case class ResultUserUtil(res: Result) extends AnyVal {

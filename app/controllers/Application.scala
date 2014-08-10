@@ -14,6 +14,8 @@ import play.api.libs.openid.{SteamOpenID, BaseOpenIDCompanion}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 
+import scala.util.Try
+
 
 object Application extends Controller {
 
@@ -69,29 +71,7 @@ object SteamAuthentication extends Controller {
     }.map {
       case Some(openID) =>
         DB.withTransaction { implicit session =>
-          val linkedUser = for {
-            i <- Identities
-            if i.kind === Identity.Kind.STEAM
-            if i.value === openID.id
-            u <- i.user
-          } yield u.id
-
-          val uid = linkedUser.firstOption match {
-            case Some(id) =>
-              id
-            case None =>
-              val currentUserID: UserID = Users.current.map(_.id).firstOption match {
-                case Some(id) =>
-                  id
-                case None =>
-                  Users.returning(Users.map(_.id)) += User(None)
-              }
-
-              val identity = Identity(None, currentUserID, Identity.Kind.STEAM, openID.id)
-              Identities.insert(identity)
-
-              currentUserID
-          }
+          val uid = Users.getOrRegisterIDByIdentity(Identity.Kind.STEAM, openID.id)
 
           Redirect(returnTo)
             .withUser(uid)
