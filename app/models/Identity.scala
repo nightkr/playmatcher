@@ -14,6 +14,13 @@ object Identity {
   object Kind {
     val STEAM = "STEAM"
   }
+
+  object Steam {
+    private val openIDRegex = "http://steamcommunity.com/openid/id/(\\d+)".r
+    def openIDToIdentityValue(openID: String): String = openID match {
+      case openIDRegex(memberID) => memberID
+    }
+  }
 }
 
 class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "IDENTITIES") {

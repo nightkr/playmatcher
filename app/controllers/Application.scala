@@ -71,7 +71,8 @@ object SteamAuthentication extends Controller {
     }.map {
       case Some(openID) =>
         DB.withTransaction { implicit session =>
-          val uid = Users.getOrRegisterIDByIdentity(Identity.Kind.STEAM, openID.id)
+          val steamMemberID = Identity.Steam.openIDToIdentityValue(openID.id)
+          val uid = Users.getOrRegisterIDByIdentity(Identity.Kind.STEAM, steamMemberID)
 
           Redirect(returnTo)
             .withUser(uid)
