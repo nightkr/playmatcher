@@ -30,6 +30,7 @@ class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "IDENTITIE
 
   def user = foreignKey("USER", userID, Users)(_.id)
   def userKindIndex = index("USER_KIND_INDEX", (userID, kind), unique = true)
+  def kindValueIndex = index("KIND_VALUE_INDEX", (kind, value), unique = true)
 
   override def * : ProvenShape[Identity] = (id.?, userID, kind, value) <> ((Identity.apply _).tupled, Identity.unapply)
 }
