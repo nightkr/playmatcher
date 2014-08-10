@@ -43,7 +43,17 @@ object Users extends TableQuery[Users](new Users(_)) {
   
   def registerIdentity(kind: String, value: String)(implicit req: RequestHeader, session: Session): UserID = {
     val uid = currentIDOrCreate()
-    Identities += Identity(None, uid, kind, value)
+    val existing = for {
+      i <- Identities
+      if i.userID === uid
+      if i.kind === kind
+    } yield i.id
+    existing.firstOption match {
+      case Some(id) =>
+        Identities.filter(_.id === id).map(_.value).update(value)
+      case None =>
+        Identities += Identity(None, uid, kind, value)
+    }
     uid
   }
 }
