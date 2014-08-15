@@ -10,11 +10,11 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.JsValue
 import play.api.mvc._
-import play.api.libs.openid.{SteamOpenID, BaseOpenIDCompanion}
+import play.api.libs.openid.SteamOpenID
 import play.api.libs.concurrent.Execution.Implicits._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 
-import scala.util.Try
+import scala.concurrent.Future
 
 
 object Application extends Controller {
@@ -22,7 +22,7 @@ object Application extends Controller {
   val clientInfoForm = Form(
     mapping(
       "name" -> nonEmptyText,
-      "games" -> seq(nonEmptyText.transform[Game](Game(None, _), _.name))
+      "games" -> seq(nonEmptyText.transform[Game](Game(None, _, None, None), _.name))
     )(ClientInfo.apply)(ClientInfo.unapply)
   )
 
@@ -68,18 +68,30 @@ object SteamAuthentication extends Controller {
     SteamOpenID().verifiedId.map(Some.apply).recover { case ex: Throwable =>
         Logger.error(s"OpenID verification failed: ${request.uri}", ex)
         None
-    }.map {
+    }.flatMap {
       case Some(openID) =>
-        DB.withTransaction { implicit session =>
+        val (steamMemberID, uid) = DB.withTransaction { implicit session =>
           val steamMemberID = Identity.Steam.openIDToIdentityValue(openID.id)
           val uid = Users.getOrRegisterIDByIdentity(Identity.Kind.STEAM, steamMemberID)
+          (steamMemberID, uid)
+        }
+        val newGamesF = UserGames.populateFromSteam(steamMemberID.toLong, uid)(DB.withTransaction)
+
+        for (newGames <- newGamesF) yield {
+          val msg = "You have been logged in" + (newGames match {
+            case 0 => ""
+            case x => s", and $x new games have been imported"
+          })
 
           Redirect(returnTo)
             .withUser(uid)
+            .flashing("success" -> msg)
         }
       case None =>
-        Redirect(returnTo)
-          .flashing("error" -> "OpenID verification failed")
+        Future(
+          Redirect(returnTo)
+            .flashing("error" -> "OpenID verification failed")
+        )
     }
   }
 }

@@ -28,7 +28,7 @@ class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "IDENTITIE
   def kind = column[String]("KIND")
   def value = column[String]("VALUE")
 
-  def user = foreignKey("USER", userID, Users)(_.id)
+  def user = foreignKey("USER_FK", userID, Users)(_.id)
   def userKindIndex = index("USER_KIND_INDEX", (userID, kind), unique = true)
   def kindValueIndex = index("KIND_VALUE_INDEX", (kind, value), unique = true)
 
