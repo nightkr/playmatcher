@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/playmatcher . -Dhttp.port=$PORT -Ddb.default.url=$DATABASE_URL
+web: target/universal/stage/bin/playmatcher . -Dhttp.port=$PORT -Ddb.default.url=$DATABASE_URL -Ddb.default.user= -Ddb.default.password=
