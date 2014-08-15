@@ -19,27 +19,36 @@ import scala.concurrent.Future
 
 object Application extends Controller {
 
-  val clientInfoForm = Form(
-    mapping(
-      "name" -> nonEmptyText,
-      "games" -> seq(nonEmptyText.transform[Game](Game(None, _, None, None), _.name))
-    )(ClientInfo.apply)(ClientInfo.unapply)
-  )
-
   def index = Action { implicit request =>
-    Ok(views.html.index(clientInfoForm.bindFromRequest()))
+    Ok(views.html.index())
   }
 
   def connect = Action { implicit request =>
-    clientInfoForm.bindFromRequest().fold[Result](
-      _ => Redirect(routes.Application.index().withQueryString(request.queryString)),
-      _ => Ok(views.html.matcher())
-    )
+    DB.withSession { implicit session =>
+      Users.current.firstOption match {
+        case None => Redirect(routes.Application.index().withQueryString(request.queryString))
+        case Some(_) => Ok(views.html.matcher())
+      }
+    }
   }
 
-  def connectWS = WebSocket.acceptWithActor[JsValue, JsValue] { implicit request => out =>
-    val clientInfo = clientInfoForm.bindFromRequest(request.queryString).get
-    WSClientActor.props(out, clientInfo)
+  def connectWS = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
+    val userQ = Users.current
+    val gamesQ = for {
+      userGame <- UserGames
+      if userGame.userID in userQ.map(_.id)
+      game <- userGame.game
+    } yield game
+    Future.successful(DB.withSession { implicit session =>
+      userQ.firstOption match {
+        case None =>
+          Left(Redirect(routes.Application.index()))
+        case Some(user) =>
+          val games = gamesQ.list
+          val clientInfo = ClientInfo(user.name.getOrElse("Unknown"), games)
+          Right(out => WSClientActor.props(out, clientInfo))
+      }
+    })
   }
 
 }
@@ -50,11 +59,9 @@ object SteamAuthentication extends Controller {
   private val steamOpenID = "http://steamcommunity.com/openid"
 
   def steamLogin(returnTo: Option[String]) = Action.async { implicit request =>
-    val realReturnTo = Seq(
-      returnTo,
-      request.headers.get("Referer"),
-      Some(routes.Application.index().url)
-    ).filter(_.isDefined).head.get
+    val realReturnTo = returnTo
+      .orElse(request.headers.get("Referer"))
+      .getOrElse(routes.Application.index().url)
     SteamOpenID().redirectURL(steamOpenID, routes.SteamAuthentication.steamCallback(realReturnTo).absoluteURL(), realm = openIDRealm)
       .map(TemporaryRedirect)
       .recover { case ex: Throwable =>
@@ -71,13 +78,18 @@ object SteamAuthentication extends Controller {
     }.flatMap {
       case Some(openID) =>
         val (steamMemberID, uid) = DB.withTransaction { implicit session =>
-          val steamMemberID = Identity.Steam.openIDToIdentityValue(openID.id)
-          val uid = Users.getOrRegisterIDByIdentity(Identity.Kind.STEAM, steamMemberID)
+          val steamMemberID = Users.Steam.openIDtoSteamid(openID.id)
+          val uid = Users.getOrRegisterIDBySteamid(steamMemberID)
           (steamMemberID, uid)
         }
-        val newGamesF = UserGames.populateFromSteam(steamMemberID.toLong, uid)(DB.withTransaction)
 
-        for (newGames <- newGamesF) yield {
+        val steamSummaryUpdatedF = Users.updateSteamInfo(steamMemberID)(DB.withTransaction)
+        val newGamesF = UserGames.populateFromSteam(steamMemberID, uid)(DB.withTransaction)
+
+        for {
+          _ <- steamSummaryUpdatedF
+          newGames <- newGamesF
+        } yield {
           val msg = "You have been logged in" + (newGames match {
             case 0 => ""
             case x => s", and $x new games have been imported"

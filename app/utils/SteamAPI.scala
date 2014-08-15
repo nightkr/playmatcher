@@ -4,7 +4,7 @@ import play.api.{Logger, Application}
 import play.api.libs.ws.WS
 import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
-import utils.SteamAPI.SteamGame
+import utils.SteamAPI.{SteamPlayerSummary, SteamGame}
 
 import scala.concurrent.Future
 
@@ -35,6 +35,18 @@ class SteamAPI(app: Application) {
         (game \ "img_icon_url").as[String]
       )))
     }
+
+    def summary(): Future[Option[SteamPlayerSummary]] = withApiKey { apiKey =>
+      val url = ws.url(s"$urlBase/ISteamUser/GetPlayerSummaries/v0002/").withQueryString(
+        "key" -> apiKey,
+        "steamids" -> steamid.toString
+      )
+      val rq = url.get()
+      rq.map(_.json \ "response" \ "players").map(_.as[Seq[JsValue]].map(player => SteamPlayerSummary(
+        (player \ "steamid").as[String].toLong,
+        (player \ "personaname").as[String]
+      )))
+    }.map(_.headOption)
   }
 }
 
@@ -44,4 +56,6 @@ object SteamAPI extends PerApplicationCompanion[SteamAPI] {
   case class SteamGame(appid: Long, name: String, icon: String) {
     def iconPath = s"http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$icon.jpg"
   }
+
+  case class SteamPlayerSummary(steamid: Long, personaname: String)
 }

@@ -1,4 +1,4 @@
-@(form: Form[ClientInfo])(implicit request: RequestHeader)
+@()(implicit request: RequestHeader)
 
 @import helper.{form => _, _}
 
@@ -10,10 +10,4 @@
     </ul>
 }
 
-<a href="@routes.SteamAuthentication.steamLogin()"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>
-
-@helper.form(action = routes.Application.connect()) {
-    @inputText(form("name"))
-    @inputText(form("games[]"))
-    <input type="submit"/>
-}
+<a href="@routes.SteamAuthentication.steamLogin(Some(routes.Application.connect().url))"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>

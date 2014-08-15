@@ -2,8 +2,12 @@ package models
 
 import org.virtuslab.unicorn.LongUnicornPlay._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
+import play.api.Application
 import play.api.mvc.{RequestHeader, Result, Request}
+import play.api.libs.concurrent.Execution.Implicits._
+import utils.SteamAPI
 
+import scala.concurrent.Future
 import scala.slick.lifted
 import scala.slick.lifted.ProvenShape
 import scala.util.Try
@@ -11,11 +15,13 @@ import scala.util.Try
 case class UserID(id: Long) extends AnyVal with BaseId
 object UserID extends IdCompanion[UserID]
 
-case class User(id: Option[UserID], banned: Boolean = false) extends WithId[UserID]
+case class User(id: Option[UserID], name: Option[String] = None, steamid: Option[Long] = None, banned: Boolean = false) extends WithId[UserID]
 
 class Users(tag: Tag) extends IdTable[UserID, User](tag, "USERS") {
+  def name = column[Option[String]]("NAME")
+  def steamid = column[Option[Long]]("STEAMID")
   def banned = column[Boolean]("BANNED")
-  override def * : ProvenShape[User] = (id.?, banned) <> (User.tupled, User.unapply)
+  override def * : ProvenShape[User] = (id.?, name, steamid, banned) <> (User.tupled, User.unapply)
 }
 
 object Users extends TableQuery[Users](new Users(_)) {
@@ -30,31 +36,34 @@ object Users extends TableQuery[Users](new Users(_)) {
     Users.current.map(_.id).firstOption
       .getOrElse(Users.returning(Users.map(_.id)) += User(None))
 
-  def getOrRegisterIDByIdentity(kind: String, value: String)(implicit req: RequestHeader, session: Session): UserID = {
-    getExistingIDByIdentity(kind, value).firstOption.getOrElse(registerIdentity(kind, value))
+  def getOrRegisterIDBySteamid(steamid: Long)(implicit req: RequestHeader, session: Session): UserID = {
+    getExistingIDBySteamid(steamid).firstOption.getOrElse(registerSteamid(steamid))
   }
 
-  def getExistingIDByIdentity(kind: String, value: String): lifted.Query[lifted.Column[UserID], UserID, Seq] = for {
-    i <- Identities
-    if i.kind === kind
-    if i.value === value
-    u <- i.user
+  def getExistingIDBySteamid(steamid: Long): lifted.Query[lifted.Column[UserID], UserID, Seq] = for {
+    u <- this
+    if u.steamid === steamid
   } yield u.id
   
-  def registerIdentity(kind: String, value: String)(implicit req: RequestHeader, session: Session): UserID = {
+  def registerSteamid(steamid: Long)(implicit req: RequestHeader, session: Session): UserID = {
     val uid = currentIDOrCreate()
-    val existing = for {
-      i <- Identities
-      if i.userID === uid
-      if i.kind === kind
-    } yield i.id
-    existing.firstOption match {
-      case Some(id) =>
-        Identities.filter(_.id === id).map(_.value).update(value)
-      case None =>
-        Identities += Identity(None, uid, kind, value)
-    }
+    this.filter(_.id === uid).map(_.steamid).update(Some(steamid))
     uid
+  }
+
+  def updateSteamInfo(steamid: Long)(sessionLender: (Session => Int) => Int)(implicit req: RequestHeader, app: Application): Future[Unit] = {
+    SteamAPI().User(steamid).summary().map(_.foreach { summary =>
+      sessionLender { implicit session =>
+        this.filter(_.steamid === steamid).map(_.name).update(Some(summary.personaname))
+      }
+    })
+  }
+
+  object Steam {
+    private val openIDRegex = "http://steamcommunity.com/openid/id/(\\d+)".r
+    def openIDtoSteamid(openID: String): Long = openID match {
+      case openIDRegex(memberID) => memberID.toLong
+    }
   }
 }
 

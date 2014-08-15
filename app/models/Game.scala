@@ -57,7 +57,7 @@ class UserGames(tag: Tag) extends IdTable[UserGameID, UserGame](tag, "USER_GAMES
   override def * : ProvenShape[UserGame] = (id.?, userID, gameID) <> (UserGame.tupled, UserGame.unapply)
 }
 object UserGames extends TableQuery[UserGames](new UserGames(_)) {
-  def populateFromSteam(id: Long, user: UserID)(implicit sessionLender: (Session => Int) => Int): Future[Int] = {
+  def populateFromSteam(id: Long, user: UserID)(sessionLender: (Session => Int) => Int): Future[Int] = {
     SteamAPI().User(id).games().map { steamGames =>
       sessionLender { implicit session =>
         val games = steamGames.map(game => Games.getOrCreate(game.name, Some(game.appid), Some(game.iconPath)))
