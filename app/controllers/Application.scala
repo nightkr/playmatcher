@@ -1,6 +1,6 @@
 package controllers
 
-import actors.WSClientActor
+import actors.WebSocketClientHandlerActor
 import models._
 import play.api.Logger
 import play.api.db.slick.DB
@@ -46,7 +46,7 @@ object Application extends Controller {
         case Some(user) =>
           val games = gamesQ.list
           val clientInfo = ClientInfo(user.name.getOrElse("Unknown"), games)
-          Right(out => WSClientActor.props(out, clientInfo))
+          Right(out => WebSocketClientHandlerActor.props(out, clientInfo))
       }
     })
   }

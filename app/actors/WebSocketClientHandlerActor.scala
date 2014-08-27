@@ -5,7 +5,7 @@ import akka.actor._
 import models.ClientInfo
 import play.api.libs.json.{JsString, JsObject, JsValue}
 
-class WSClientActor(out: ActorRef, info: ClientInfo) extends Actor with HasClientManager {
+class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor with HasClientManager {
   override def receive: Receive = {
     case msg: JsValue =>
       out ! msg
@@ -25,6 +25,6 @@ class WSClientActor(out: ActorRef, info: ClientInfo) extends Actor with HasClien
   }
 }
 
-object WSClientActor {
-  def props(out: ActorRef, info: ClientInfo) = Props(new WSClientActor(out, info))
+object WebSocketClientHandlerActor {
+  def props(out: ActorRef, info: ClientInfo) = Props(new WebSocketClientHandlerActor(out, info))
 }
