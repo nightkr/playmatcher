@@ -17,7 +17,7 @@ case class Game(id: Option[GameID], name: String, steamAppID: Option[Long] = Non
   def toJson = JsObject(Seq("name" -> JsString(name)))
 }
 
-class Games(tag: Tag) extends IdTable[GameID, Game](tag, "GAMES") {
+class Games(tag: Tag) extends IdTable[GameID, Game](tag, "games") {
   def name = column[String]("NAME")
   def steamAppID = column[Option[Long]]("STEAM_APPID")
   def icon = column[Option[String]]("icon")
@@ -47,7 +47,7 @@ object UserGameID extends IdCompanion[UserGameID]
 
 case class UserGame(id: Option[UserGameID], userID: UserID, gameID: GameID) extends WithId[UserGameID]
 
-class UserGames(tag: Tag) extends IdTable[UserGameID, UserGame](tag, "USER_GAMES") {
+class UserGames(tag: Tag) extends IdTable[UserGameID, UserGame](tag, "user_games") {
   def userID = column[UserID]("USER_ID")
   def gameID = column[GameID]("GAME_ID")
 

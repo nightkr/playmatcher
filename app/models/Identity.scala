@@ -18,7 +18,7 @@ object Identity {
 
 }
 
-class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "IDENTITIES") {
+class Identities(tag: Tag) extends IdTable[IdentityID, Identity](tag, "identities") {
   def userID = column[UserID]("USER_ID")
   def kind = column[String]("KIND")
   def value = column[String]("VALUE")

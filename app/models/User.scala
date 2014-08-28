@@ -17,7 +17,7 @@ object UserID extends IdCompanion[UserID]
 
 case class User(id: Option[UserID], name: Option[String] = None, steamid: Option[Long] = None, banned: Boolean = false) extends WithId[UserID]
 
-class Users(tag: Tag) extends IdTable[UserID, User](tag, "USERS") {
+class Users(tag: Tag) extends IdTable[UserID, User](tag, "users") {
   def name = column[Option[String]]("NAME")
   def steamid = column[Option[Long]]("STEAMID")
   def banned = column[Boolean]("BANNED")
