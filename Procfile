@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/playmatcher . -Dhttp.port=$PORT -Ddb.default.url=$DATABASE_URL -Dsteam.key=$STEAM_KEY -DapplyEvolutions.default=true -DapplyDownEvolutions.default=true
+web: target/universal/stage/bin/playmatcher . -DapplyEvolutions.default=true -DapplyDownEvolutions.default=true
