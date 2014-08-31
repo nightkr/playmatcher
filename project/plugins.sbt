@@ -8,6 +8,8 @@ resolvers ++= Seq(
   "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 )
 
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
+
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.2"
   exclude("org.slf4j", "slf4j-simple")
   exclude("org.slf4j", "slf4j-nop")
