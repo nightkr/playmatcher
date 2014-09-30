@@ -4,7 +4,7 @@ cache:
   - "$HOME/.ivy2/cache"
 deploy:
   provider: heroku
-  strategy: anvil
+  strategy: git
   api_key:
     secure: P/CWOVNgPZIJ4JEVR6rG6R0o2vqNJ21UR9QPOrsDRqwZReF9TZ35jRVNnxYngNxyOFAIf1hZ/yrbV9vIKN7att3DQUWlA5wzIw8iIpvZ4sR3id0zzq9MZ01nPExs2u6c304X7MFqQnjfrMMFFreZdx51DRP3C/bgrjZz+LRahgw=
 jdk: openjdk7
