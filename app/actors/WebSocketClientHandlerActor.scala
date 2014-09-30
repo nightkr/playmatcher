@@ -18,7 +18,6 @@ class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor
       ))
   }
 
-  @scala.throws[Exception](classOf[Exception])
   override def preStart() {
     super.preStart()
     clientManager ! Register(info)

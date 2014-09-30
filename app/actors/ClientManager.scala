@@ -30,7 +30,6 @@ class ClientManager extends Actor with ActorLogging {
     sharedGames > 0
   }
 
-  @scala.throws[Exception](classOf[Exception])
   override def postStop() {
     super.postStop()
 
