@@ -2,22 +2,25 @@ package actors
 
 import actors.ClientManager.{MatchFound, Register}
 import akka.actor._
+import matchers.Matcher
 import models.ClientInfo
 
 import scala.collection.mutable
 
 class ClientManager extends Actor with ActorLogging {
-  val queue = mutable.Queue[(ActorRef, ClientInfo)]()
+  val queue = mutable.Queue[(ActorRef, Matcher)]()
 
   override def receive: Receive = {
     case Register(info) =>
       val client = sender()
-      queue.dequeueFirst({ case (otherRef, otherInfo) => infoMatches(info, otherInfo)}) match {
+      val matcher = Matcher.default(info)
+
+      queue.dequeueFirst({ case (otherRef, otherMatcher) => infoMatches(matcher, otherMatcher)}) match {
         case None =>
           context.watch(client)
-          queue += ((client, info))
+          queue += client -> matcher
         case Some((otherRef, otherInfo)) =>
-          client ! MatchFound(otherInfo)
+          client ! MatchFound(otherInfo.selfInfo)
           otherRef ! MatchFound(info)
       }
 
@@ -25,9 +28,11 @@ class ClientManager extends Actor with ActorLogging {
       queue.dequeueAll { case (ref, info) => ref == client}
   }
 
-  def infoMatches(x: ClientInfo, y: ClientInfo): Boolean = {
-    val sharedGames = x.games.intersect(y.games).length
-    sharedGames > 0
+  def infoMatches(self: Matcher, other: Matcher): Boolean = {
+    val selfScore = self.score(other.selfInfo)
+    val otherScore = other.score(self.selfInfo)
+    val score = (selfScore + otherScore) / 2
+    score > 0
   }
 
   override def postStop() {
