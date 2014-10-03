@@ -1,27 +1,38 @@
 package actors
 
-import actors.ClientManager.{MatchFound, Register}
+import actors.ClientManager.{Tick, MatchFound, Register}
 import akka.actor._
 import matchers.Matcher
 import models.ClientInfo
+import utils.Breakable
 
 import scala.collection.mutable
+import scala.concurrent.duration._
 
 class ClientManager extends Actor with ActorLogging {
+  import context._
+
   val queue = mutable.Queue[(ActorRef, Matcher)]()
 
   override def receive: Receive = {
     case Register(info) =>
       val client = sender()
       val matcher = Matcher.default(info)
+      context.watch(client)
+      queue += client -> matcher
 
-      queue.dequeueFirst({ case (otherRef, otherMatcher) => infoMatches(matcher, otherMatcher)}) match {
-        case None =>
-          context.watch(client)
-          queue += client -> matcher
-        case Some((otherRef, otherInfo)) =>
-          client ! MatchFound(otherInfo.selfInfo)
-          otherRef ! MatchFound(info)
+    case Tick =>
+      Breakable { break =>
+        for (entry@(ref, matcher) <- queue) {
+          queue.dequeueFirst({ case (otherRef, otherMatcher) => ref != otherRef && infoMatches(matcher, otherMatcher)}) match {
+            case None =>
+            case Some((otherRef, otherMatcher)) =>
+              queue.dequeueFirst(_ eq entry)
+              ref ! MatchFound(otherMatcher.selfInfo)
+              otherRef ! MatchFound(matcher.selfInfo)
+              break()
+          }
+        }
       }
 
     case Terminated(client) =>
@@ -33,6 +44,12 @@ class ClientManager extends Actor with ActorLogging {
     val otherScore = other.score(self.selfInfo)
     val score = (selfScore + otherScore) / 2
     score > 0
+  }
+
+  override def preStart(): Unit = {
+    super.preStart()
+
+    system.scheduler.schedule(0.seconds, 1.second, self, Tick)
   }
 
   override def postStop() {
@@ -52,6 +69,7 @@ object ClientManager extends akka.actor.ExtensionId[ClientManagerExtensionImpl] 
   override def createExtension(system: ExtendedActorSystem): ClientManagerExtensionImpl = new ClientManagerExtensionImpl(system)
 
   case class Register(info: ClientInfo)
+  case object Tick
 
   case class MatchFound(other: ClientInfo)
 
