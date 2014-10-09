@@ -1,6 +1,6 @@
 package utils
 
-import play.api.{Plugin, Application}
+import play.api.{Application, Plugin}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable

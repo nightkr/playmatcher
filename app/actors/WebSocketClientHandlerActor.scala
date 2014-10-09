@@ -3,7 +3,7 @@ package actors
 import actors.ClientManager.{MatchFound, Register}
 import akka.actor._
 import models.ClientInfo
-import play.api.libs.json.{JsString, JsObject, JsValue}
+import play.api.libs.json.{JsObject, JsString, JsValue}
 
 class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor with HasClientManager {
   override def receive: Receive = {

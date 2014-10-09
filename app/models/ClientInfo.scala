@@ -1,6 +1,6 @@
 package models
 
-import play.api.libs.json.{JsArray, JsString, JsObject}
+import play.api.libs.json.{JsArray, JsObject, JsString}
 
 case class ClientInfo(name: String, games: Seq[Game]) {
   def toJson = JsObject(Seq(

@@ -1,12 +1,12 @@
 @()(implicit request: RequestHeader)
 
-@import helper.{form => _, _}
+@import views.html.helper.{form => _}
 
 @if(request.flash.data.nonEmpty) {
     <ul>
-        @for((key, value) <- request.flash.data) {
-            <li class="flash-@key">@value</li>
-        }
+    @for((key, value) <- request.flash.data) {
+        <li class="flash-@key">@value</li>
+    }
     </ul>
 }
 

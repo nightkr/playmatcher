@@ -1,6 +1,6 @@
 package actors
 
-import actors.ClientManager.{Tick, MatchFound, Register}
+import actors.ClientManager.{MatchFound, Register, Tick}
 import akka.actor._
 import matchers.Matcher
 import models.ClientInfo
@@ -10,6 +10,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 
 class ClientManager extends Actor with ActorLogging {
+
   import context._
 
   val queue = mutable.Queue[(ActorRef, Matcher)]()
@@ -69,9 +70,10 @@ object ClientManager extends akka.actor.ExtensionId[ClientManagerExtensionImpl] 
   override def createExtension(system: ExtendedActorSystem): ClientManagerExtensionImpl = new ClientManagerExtensionImpl(system)
 
   case class Register(info: ClientInfo)
-  case object Tick
 
   case class MatchFound(other: ClientInfo)
+
+  case object Tick
 
 }
 

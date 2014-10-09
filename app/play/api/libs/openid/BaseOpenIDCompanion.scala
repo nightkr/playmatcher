@@ -1,13 +1,10 @@
 package play.api.libs.openid
 
-import play.api.{Plugin, Application}
-import play.api.libs.ws.{WSClient, WS}
+import play.api.Application
+import play.api.libs.ws.{WS, WSClient}
 import utils.PerApplicationCompanion
 
-import scala.collection.concurrent.TrieMap
-import scala.collection.mutable
 import scala.concurrent.Future
-import scala.reflect.runtime.universe.TypeTag
 import scala.util.DynamicVariable
 
 class BaseOpenID(ws: WSClient) extends OpenIDClient(ws)
@@ -21,7 +18,11 @@ class SteamOpenID(ws: WSClient) extends BaseOpenID(ws) {
     }
   }
 }
+
 object SteamOpenID extends PerApplicationCompanion[SteamOpenID] {
+
+  override def create(app: Application) = new SteamOpenID(WS.client(app))
+
   class SteamDiscovery(ws: WSClient) extends Discovery(ws: WSClient) {
     val fakeNormalizeIdentifier = new DynamicVariable[Option[String]](None)
 
@@ -34,5 +35,4 @@ object SteamOpenID extends PerApplicationCompanion[SteamOpenID] {
     }
   }
 
-  override def create(app: Application) = new SteamOpenID(WS.client(app))
 }

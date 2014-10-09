@@ -2,17 +2,15 @@ package controllers
 
 import actors.WebSocketClientHandlerActor
 import models._
-import play.api.Logger
-import play.api.db.slick.DB
-import utils._
-import play.api.Play.current
-import play.api.data.Forms._
-import play.api.data._
-import play.api.libs.json.JsValue
-import play.api.mvc._
-import play.api.libs.openid.SteamOpenID
-import play.api.libs.concurrent.Execution.Implicits._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
+import play.api.Logger
+import play.api.Play.current
+import play.api.db.slick.DB
+import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.JsValue
+import play.api.libs.openid.SteamOpenID
+import play.api.mvc._
+import utils._
 
 import scala.concurrent.Future
 
@@ -54,8 +52,6 @@ object Application extends Controller {
 }
 
 object SteamAuthentication extends Controller {
-  private def openIDRealm(implicit req: RequestHeader): Option[String] = Some(routes.Application.index().absoluteURL())
-
   private val steamOpenID = "http://steamcommunity.com/openid"
 
   def steamLogin(returnTo: Option[String]) = Action.async { implicit request =>
@@ -65,16 +61,18 @@ object SteamAuthentication extends Controller {
     SteamOpenID().redirectURL(steamOpenID, routes.SteamAuthentication.steamCallback(realReturnTo).absoluteURL(), realm = openIDRealm)
       .map(TemporaryRedirect)
       .recover { case ex: Throwable =>
-        Logger.error("OpenID redirect retrieval failed", ex)
-        Redirect(realReturnTo)
-          .flashing("error" -> "OpenID authentication failed")
+      Logger.error("OpenID redirect retrieval failed", ex)
+      Redirect(realReturnTo)
+        .flashing("error" -> "OpenID authentication failed")
     }
   }
 
+  private def openIDRealm(implicit req: RequestHeader): Option[String] = Some(routes.Application.index().absoluteURL())
+
   def steamCallback(returnTo: String) = Action.async { implicit request =>
     SteamOpenID().verifiedId.map(Some.apply).recover { case ex: Throwable =>
-        Logger.error(s"OpenID verification failed: ${request.uri}", ex)
-        None
+      Logger.error(s"OpenID verification failed: ${request.uri}", ex)
+      None
     }.flatMap {
       case Some(openID) =>
         val (steamMemberID, uid) = DB.withTransaction { implicit session =>

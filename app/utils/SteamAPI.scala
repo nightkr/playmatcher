@@ -1,10 +1,10 @@
 package utils
 
-import play.api.{Logger, Application}
-import play.api.libs.ws.WS
-import play.api.libs.json._
 import play.api.libs.concurrent.Execution.Implicits._
-import utils.SteamAPI.{SteamPlayerSummary, SteamGame}
+import play.api.libs.json._
+import play.api.libs.ws.WS
+import play.api.{Application, Logger}
+import utils.SteamAPI.{SteamGame, SteamPlayerSummary}
 
 import scala.concurrent.Future
 
@@ -48,6 +48,7 @@ class SteamAPI(app: Application) {
       )))
     }.map(_.headOption)
   }
+
 }
 
 object SteamAPI extends PerApplicationCompanion[SteamAPI] {
@@ -58,4 +59,5 @@ object SteamAPI extends PerApplicationCompanion[SteamAPI] {
   }
 
   case class SteamPlayerSummary(steamid: Long, personaname: String)
+
 }
