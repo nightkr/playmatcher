@@ -1,9 +1,9 @@
 package actors
 
-import actors.ClientManager.{MatchFound, Register}
+import actors.ClientManager.{MatchFound, NewMatchThreshold, Register}
 import akka.actor._
 import models.ClientInfo
-import play.api.libs.json.{JsObject, JsString, JsValue}
+import play.api.libs.json.{JsNumber, JsObject, JsString, JsValue}
 
 class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor with HasClientManager {
   override def receive: Receive = {
@@ -15,6 +15,12 @@ class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor
       out ! JsObject(Seq(
         "event" -> JsString("match found"),
         "person" -> other.toJson
+      ))
+
+    case NewMatchThreshold(threshold) =>
+      out ! JsObject(Seq(
+        "event" -> JsString("new threshold"),
+        "threshold" -> JsNumber(threshold)
       ))
   }
 

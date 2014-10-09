@@ -1,6 +1,6 @@
 package actors
 
-import actors.ClientManager.{MatchFound, Register, Tick}
+import actors.ClientManager.{MatchFound, NewMatchThreshold, Register, Tick}
 import akka.actor._
 import matchers.Matcher
 import models.ClientInfo
@@ -14,6 +14,7 @@ class ClientManager extends Actor with ActorLogging {
   import context._
 
   val queue = mutable.Queue[(ActorRef, Matcher)]()
+  val clientThresholds = mutable.WeakHashMap[ClientInfo, Double]()
 
   override def receive: Receive = {
     case Register(info) =>
@@ -21,8 +22,15 @@ class ClientManager extends Actor with ActorLogging {
       val matcher = Matcher.default(info)
       context.watch(client)
       queue += client -> matcher
+      clientThresholds += info -> 100
 
     case Tick =>
+      for ((actor, matcher) <- queue) {
+        val threshold = clientThresholds(matcher.selfInfo) * 0.99
+        clientThresholds(matcher.selfInfo) = threshold
+        actor ! NewMatchThreshold(threshold)
+      }
+
       Breakable { break =>
         for (entry@(ref, matcher) <- queue) {
           queue.dequeueFirst({ case (otherRef, otherMatcher) => ref != otherRef && infoMatches(matcher, otherMatcher)}) match {
@@ -43,8 +51,7 @@ class ClientManager extends Actor with ActorLogging {
   def infoMatches(selfMatcher: Matcher, otherMatcher: Matcher): Boolean = {
     val selfScore = selfMatcher.score(otherMatcher.selfInfo)
     val otherScore = otherMatcher.score(selfMatcher.selfInfo)
-    val score = (selfScore + otherScore) / 2
-    score > 0
+    selfScore >= clientThresholds(selfMatcher.selfInfo) && otherScore >= clientThresholds(otherMatcher.selfInfo)
   }
 
   override def preStart(): Unit = {
@@ -69,11 +76,17 @@ object ClientManager extends akka.actor.ExtensionId[ClientManagerExtensionImpl] 
 
   override def createExtension(system: ExtendedActorSystem): ClientManagerExtensionImpl = new ClientManagerExtensionImpl(system)
 
-  case class Register(info: ClientInfo)
+  sealed trait Event
 
-  case class MatchFound(other: ClientInfo)
+  sealed trait Command
 
-  case object Tick
+  case class Register(info: ClientInfo) extends Command
+
+  case class MatchFound(other: ClientInfo) extends Event
+
+  case class NewMatchThreshold(threshold: Double) extends Event
+
+  private case object Tick
 
 }
 
