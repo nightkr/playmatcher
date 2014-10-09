@@ -20,7 +20,7 @@ class WebSocketClientHandlerActor(out: ActorRef, info: ClientInfo) extends Actor
     case NewMatchThreshold(threshold) =>
       out ! JsObject(Seq(
         "event" -> JsString("new threshold"),
-        "threshold" -> JsNumber(threshold)
+        "threshold" -> JsNumber(math.round(threshold))
       ))
   }
 
