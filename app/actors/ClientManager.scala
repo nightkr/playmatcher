@@ -39,9 +39,9 @@ class ClientManager extends Actor with ActorLogging {
       queue.dequeueAll { case (ref, info) => ref == client}
   }
 
-  def infoMatches(self: Matcher, other: Matcher): Boolean = {
-    val selfScore = self.score(other.selfInfo)
-    val otherScore = other.score(self.selfInfo)
+  def infoMatches(selfMatcher: Matcher, otherMatcher: Matcher): Boolean = {
+    val selfScore = selfMatcher.score(otherMatcher.selfInfo)
+    val otherScore = otherMatcher.score(selfMatcher.selfInfo)
     val score = (selfScore + otherScore) / 2
     score > 0
   }
