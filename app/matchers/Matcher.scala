@@ -20,5 +20,5 @@ case class Matcher(selfInfo: ClientInfo, rules: MatcherRule*) {
 }
 
 object Matcher {
-  def default(self: ClientInfo): Matcher = Matcher(self, MatcherRuleCommonGames)
+  def default(self: ClientInfo): Matcher = Matcher(self, MatcherRuleCommonGames, MatcherRuleFail)
 }
