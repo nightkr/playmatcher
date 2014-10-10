@@ -15,6 +15,7 @@ class ClientManager extends Actor with ActorLogging {
 
   val queue = mutable.Queue[(ActorRef, Matcher)]()
   val clientThresholds = mutable.WeakHashMap[ClientInfo, Double]()
+  val scoreCache = mutable.WeakHashMap[Matcher, mutable.WeakHashMap[Matcher, Int]]()
 
   override def receive: Receive = {
     case Register(info) =>
@@ -49,9 +50,15 @@ class ClientManager extends Actor with ActorLogging {
   }
 
   def infoMatches(selfMatcher: Matcher, otherMatcher: Matcher): Boolean = {
-    val selfScore = selfMatcher.score(otherMatcher.selfInfo)
-    val otherScore = otherMatcher.score(selfMatcher.selfInfo)
+    val selfScore = calculateScore(selfMatcher, otherMatcher)
+    val otherScore = calculateScore(otherMatcher, selfMatcher)
     selfScore >= clientThresholds(selfMatcher.selfInfo) && otherScore >= clientThresholds(otherMatcher.selfInfo)
+  }
+
+  def calculateScore(selfMatcher: Matcher, otherMatcher: Matcher): Int = {
+    scoreCache
+      .getOrElseUpdate(selfMatcher, mutable.WeakHashMap())
+      .getOrElseUpdate(otherMatcher, selfMatcher.score(otherMatcher.selfInfo))
   }
 
   override def preStart(): Unit = {
