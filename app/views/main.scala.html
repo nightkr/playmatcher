@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String)(content: Html)(implicit request: RequestHeader)
 
 <!DOCTYPE html>
 
@@ -11,6 +11,13 @@
         <script src="@routes.Assets.at("javascripts/main.js")" type="text/javascript"></script>
     </head>
     <body>
-    @content
+        @if(request.flash.data.nonEmpty) {
+            <ul>
+            @for((key, value) <- request.flash.data) {
+                <li class="flash-@key">@value</li>
+            }
+            </ul>
+        }
+        @content
     </body>
 </html>

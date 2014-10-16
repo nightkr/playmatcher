@@ -18,7 +18,12 @@ import scala.concurrent.Future
 object Application extends Controller {
 
   def index = Action { implicit request =>
-    Ok(views.html.index())
+    DB.withSession { implicit session =>
+      Users.current.firstOption match {
+        case Some(_) => Ok(views.html.home())
+        case None => Ok(views.html.front())
+      }
+    }
   }
 
   def connect = Action { implicit request =>
@@ -49,6 +54,9 @@ object Application extends Controller {
     })
   }
 
+  def logOut = Action {
+    Redirect(routes.Application.index()).withNewSession
+  }
 }
 
 object SteamAuthentication extends Controller {
