@@ -1,7 +1,21 @@
 @()(implicit request: RequestHeader)
 
 @main("") {
+    <script src="@routes.Assets.at("javascripts/gamesEditor.js")" type="text/javascript"></script>
     <a href="@routes.Application.logOut()">Log out</a>
     <br/>
     <a href="@routes.Application.connect()">Enter queue</a>
+
+    <div ng-controller="GamesEditorController as editor">
+        <a href="#" ng-click="editor.setAllGamesEnabled(true)">Enable all</a>
+        <a href="#" ng-click="editor.setAllGamesEnabled(false)">Disable all</a>
+        <ul>
+            <li ng-repeat="game in games">
+                <label>
+                    <input type="checkbox" ng-change="editor.updateGameEnabled(game)" ng-model="game.enabled" />
+                    {{ game.game.name }}
+                </label>
+            </li>
+        </ul>
+    </div>
 }

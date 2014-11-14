@@ -4,7 +4,7 @@ import org.virtuslab.unicorn.LongUnicornPlay._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.{JsObject, JsString}
+import play.api.libs.json.{JsNumber, JsObject, JsString}
 import utils.SteamAPI
 
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ case class GameID(id: Long) extends AnyVal with BaseId
 object GameID extends IdCompanion[GameID]
 
 case class Game(id: Option[GameID], name: String, steamAppID: Option[Long] = None, icon: Option[String] = None) extends WithId[GameID] {
-  def toJson = JsObject(Seq("name" -> JsString(name)))
+  def toJson = JsObject(Seq("id" -> JsNumber(id.get.id), "name" -> JsString(name)))
 }
 
 class Games(tag: Tag) extends IdTable[GameID, Game](tag, "games") {
@@ -50,18 +50,20 @@ case class UserGameID(id: Long) extends AnyVal with BaseId
 
 object UserGameID extends IdCompanion[UserGameID]
 
-case class UserGame(id: Option[UserGameID], userID: UserID, gameID: GameID) extends WithId[UserGameID]
+case class UserGame(id: Option[UserGameID], userID: UserID, gameID: GameID, enabled: Boolean = true) extends WithId[UserGameID]
 
 class UserGames(tag: Tag) extends IdTable[UserGameID, UserGame](tag, "user_games") {
   def user = foreignKey("USER_FK", userID, Users)(_.id)
 
   def game = foreignKey("GAME_FK", gameID, Games)(_.id)
 
-  override def * : ProvenShape[UserGame] = (id.?, userID, gameID) <>(UserGame.tupled, UserGame.unapply)
+  override def * : ProvenShape[UserGame] = (id.?, userID, gameID, enabled) <>(UserGame.tupled, UserGame.unapply)
 
   def gameID = column[GameID]("GAME_ID")
 
   def userID = column[UserID]("USER_ID")
+
+  def enabled = column[Boolean]("ENABLED")
 }
 
 object UserGames extends TableQuery[UserGames](new UserGames(_)) {
@@ -75,5 +77,24 @@ object UserGames extends TableQuery[UserGames](new UserGames(_)) {
         this.insertAll(newGames.map(UserGame(None, user, _)): _*).get
       }
     }
+  }
+
+  def byUser(user: UserID)(implicit session: Session): Seq[(UserGame, Game)] = {
+    this.filter(_.userID === user).innerJoin(Games).on(_.gameID === _.id).list
+  }
+
+  def setEnabled(game: GameID, user: UserID, enabled: Boolean)(implicit session: Session): Boolean = {
+    this
+      .filter(_.gameID === game)
+      .filter(_.userID === user)
+      .map(_.enabled)
+      .update(enabled) > 0
+  }
+
+  def setAllEnabled(user: UserID, enabled: Boolean)(implicit session: Session): Int = {
+    this
+      .filter(_.userID === user)
+      .map(_.enabled)
+      .update(enabled)
   }
 }

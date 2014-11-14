@@ -2,12 +2,6 @@
 
 @import views.html.helper.{form => _}
 
-@if(request.flash.data.nonEmpty) {
-    <ul>
-    @for((key, value) <- request.flash.data) {
-        <li class="flash-@key">@value</li>
-    }
-    </ul>
+@main("") {
+    <a href="@routes.SteamAuthentication.steamLogin(Some(routes.Application.index().url))"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>
 }
-
-<a href="@routes.SteamAuthentication.steamLogin(Some(routes.Application.index().url))"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>

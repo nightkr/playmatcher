@@ -11,6 +11,7 @@ libraryDependencies ++= Seq(
   "org.webjars" % "handlebars" % "2.0.0-alpha.2",
   "org.webjars" % "requirejs" % "2.1.14-1",
   "org.webjars" % "jquery" % "2.1.1",
+  "org.webjars" % "angularjs" % "1.3.0",
   "com.typesafe.play" %% "play-slick" % "0.8.0-RC3",
   ws,
   "org.virtuslab" %% "unicorn-play" % "0.6.0",

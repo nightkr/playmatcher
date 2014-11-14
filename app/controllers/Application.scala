@@ -40,6 +40,7 @@ object Application extends Controller {
     val gamesQ = for {
       userGame <- UserGames
       if userGame.userID in userQ.map(_.id)
+      if userGame.enabled
       game <- userGame.game
     } yield game
     Future.successful(DB.withSession { implicit session =>
