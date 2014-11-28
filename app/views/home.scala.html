@@ -9,11 +9,12 @@
     <div ng-controller="GamesEditorController as editor">
         <a href="#" ng-click="editor.setAllGamesEnabled(true)">Enable all</a>
         <a href="#" ng-click="editor.setAllGamesEnabled(false)">Disable all</a>
-        <ul>
+        <ul class="games-list">
             <li ng-repeat="game in games">
                 <label>
                     <input type="checkbox" ng-change="editor.updateGameEnabled(game)" ng-model="game.enabled" />
-                    {{ game.game.name }}
+                    <img src="{{ game.game.icon }}"/>
+                    <span>{{ game.game.name }}</span>
                 </label>
             </li>
         </ul>

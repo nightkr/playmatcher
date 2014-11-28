@@ -4,7 +4,7 @@ import org.virtuslab.unicorn.LongUnicornPlay._
 import org.virtuslab.unicorn.LongUnicornPlay.driver.simple._
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.libs.json.{JsNumber, JsObject, JsString}
+import play.api.libs.json.{JsNull, JsNumber, JsObject, JsString}
 import utils.SteamAPI
 
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ case class GameID(id: Long) extends AnyVal with BaseId
 object GameID extends IdCompanion[GameID]
 
 case class Game(id: Option[GameID], name: String, steamAppID: Option[Long] = None, icon: Option[String] = None) extends WithId[GameID] {
-  def toJson = JsObject(Seq("id" -> JsNumber(id.get.id), "name" -> JsString(name)))
+  def toJson = JsObject(Seq("id" -> JsNumber(id.get.id), "name" -> JsString(name), "icon" -> icon.map(JsString).getOrElse(JsNull)))
 }
 
 class Games(tag: Tag) extends IdTable[GameID, Game](tag, "games") {
@@ -80,7 +80,11 @@ object UserGames extends TableQuery[UserGames](new UserGames(_)) {
   }
 
   def byUser(user: UserID)(implicit session: Session): Seq[(UserGame, Game)] = {
-    this.filter(_.userID === user).innerJoin(Games).on(_.gameID === _.id).list
+    this
+      .filter(_.userID === user)
+      .innerJoin(Games).on(_.gameID === _.id)
+      .sortBy(_._2.name)
+      .list
   }
 
   def setEnabled(game: GameID, user: UserID, enabled: Boolean)(implicit session: Session): Boolean = {
