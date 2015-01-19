@@ -1,4 +1,4 @@
-connection = new WebSocket(jsRoutes.controllers.Application.connectWS().webSocketURL() + location.search)
+connection = new WebSocket(jsRouter.controllers.Application.connectWS().webSocketURL() + location.search)
 
 templates =
   searching: Handlebars.compile(Handlebars.Templates.Searching)
