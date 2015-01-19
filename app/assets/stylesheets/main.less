@@ -1,25 +1,69 @@
 ul.games-list {
   li {
     label {
-      input[type=checkbox],
-      img {
-        width: 16px;
-        height: 16px;
+      .icon-column {
+        * {
+          float: left;
+          height: 32px;
+          width: 32px;
+        }
+
+        vertical-align: middle;
+        float: left;
+
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
       }
 
       span {
-        //margin-bottom: 4px;
+        display: block;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
       }
 
-      > * {
-        height: 24px;
-        vertical-align: middle;
-      }
+      display: inline-block;
+      padding: 2px 4px 0 2px;
+      width: 100%;
+      height: 48px;
+      overflow: hidden;
     }
 
+    &:not(.enabled) {
+      opacity: 0.6;
+    }
     display: inline-block;
-    padding: 2px 4px 2px 2px;
     margin: 4px;
+
+    width: 300px;
     background: #e0e0e0;
+  }
+}
+
+.hidden:not(.hidden-override-visible) {
+  display: none;
+}
+
+.show-games-toggle {
+  input:not(:checked) ~ .show-games-toggle-button::after {
+    content: "\25C0";
+  }
+
+  input:checked ~ .show-games-toggle-button::after {
+    content: "\25BC";
+  }
+
+  .show-games-toggle-button {
+    width: 16px;
+    display: inline-block;
+  }
+
+  input {
+    display: none;
+  }
+
+  * {
+    cursor: pointer !important;
   }
 }

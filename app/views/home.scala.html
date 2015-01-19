@@ -7,16 +7,40 @@
     <a href="@routes.Application.connect()">Enter queue</a>
 
     <div ng-controller="GamesEditorController as editor">
-        <a href="#" ng-click="editor.setAllGamesEnabled(true)">Enable all</a>
-        <a href="#" ng-click="editor.setAllGamesEnabled(false)">Disable all</a>
-        <ul class="games-list">
-            <li ng-repeat="game in games">
-                <label>
-                    <input type="checkbox" ng-change="editor.updateGameEnabled(game)" ng-model="game.enabled" />
-                    <img src="{{ game.game.icon }}"/>
-                    <span>{{ game.game.name }}</span>
-                </label>
-            </li>
-        </ul>
+        <h2 class="show-games-toggle">
+            <label>
+                <input class="show-games-toggle-checkbox" type="checkbox" ng-model="showGames"/>
+                <span class="show-games-toggle-button"></span>
+                Select games
+            </label>
+        </h2>
+
+        <div class="hidden {{ showGames|if:'hidden-override-visible' }}">
+            <div>
+                Select (
+                <a href="#" ng-click="editor.setAllGamesEnabled(true)">all</a>
+                /
+                <a href="#" ng-click="editor.setAllGamesEnabled(false)">none</a>
+                )
+            </div>
+
+            <div>
+                Search: <input type="search" ng-model="gameSearchTerm"/>
+            </div>
+
+            <ul class="games-list">
+                <li ng-repeat="game in games | filter:gameSearchTerm" class="{{ game.enabled|if:'enabled' }}">
+                    <label>
+                        <div class="icon-column">
+                            <img src="{{ game.game.icon }}"/>
+                            <input type="checkbox" ng-change="editor.updateGameEnabled(game)" ng-model="game.enabled" />
+                        </div>
+                        <span>
+                            {{ game.game.name }}
+                        </span>
+                    </label>
+                </li>
+            </ul>
+        </div>
     </div>
 }
