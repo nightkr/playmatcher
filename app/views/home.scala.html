@@ -15,7 +15,7 @@
             </label>
         </h2>
 
-        <div class="hidden {{ showGames|if:'hidden-override-visible' }}">
+        <div ng-show="showGames">
             <div>
                 Select (
                 <a href="#" ng-click="editor.setAllGamesEnabled(true)">all</a>
