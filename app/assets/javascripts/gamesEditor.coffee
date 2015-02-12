@@ -1,11 +1,4 @@
-m = angular.module('playmatcher', [])
-
-m.filter "if", ->
-  (input, then_, else_) ->
-    if (input)
-      then_
-    else
-      else_
+m = angular.module('editor', ['common'])
 
 m.controller('GamesEditorController', [
   '$scope'

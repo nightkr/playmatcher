@@ -1,7 +1,6 @@
 @()(implicit request: RequestHeader)
 
 @main("") {
-    <script src="@routes.Assets.at("javascripts/gamesEditor.js")" type="text/javascript"></script>
     <a href="@routes.Application.logOut()">Log out</a>
     <br/>
     <a href="@routes.Application.connect()">Enter queue</a>
@@ -29,16 +28,8 @@
             </div>
 
             <ul class="games-list">
-                <li ng-repeat="game in games | filter:gameSearchTerm" class="{{ game.enabled|if:'enabled' }}">
-                    <label>
-                        <div class="icon-column">
-                            <img src="{{ game.game.icon }}"/>
-                            <input type="checkbox" ng-change="editor.updateGameEnabled(game)" ng-model="game.enabled" />
-                        </div>
-                        <span>
-                            {{ game.game.name }}
-                        </span>
-                    </label>
+                <li ng-repeat="userGame in games | filter:gameSearchTerm" class="{{ userGame.enabled|if:'enabled' }}" ng-init="game=userGame.game">
+                    @game(true)
                 </li>
             </ul>
         </div>

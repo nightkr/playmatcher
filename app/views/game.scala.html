@@ -1,0 +1,13 @@
+@(editable: Boolean = false)
+
+<label>
+    <div class="icon-column">
+        <img ng-src="{{ game.icon }}"/>
+        @if(editable) {
+            <input type="checkbox" ng-change="editor.updateGameEnabled(userGame)" ng-model="userGame.enabled" />
+        }
+    </div>
+    <span>
+        {{ game.name }}
+    </span>
+</label>
