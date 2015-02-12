@@ -3,7 +3,7 @@ package controllers
 import models._
 import play.api.libs.json._
 
-object Customization extends PMController {
+object GameCustomization extends PMController {
   def myGames = APIUserAction { rq =>
     implicit val (req, session, user) = rq
     val games = UserGames.byUser(user.id.get)

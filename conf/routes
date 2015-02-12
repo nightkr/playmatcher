@@ -16,6 +16,8 @@ GET         /login/steam/callback                  controllers.SteamAuthenticati
 
 GET         /logout                                controllers.Application.logOut
 
-GET         /api/user/me/games                     controllers.Customization.myGames
-POST        /api/user/me/game/all/enabled          controllers.Customization.setAllEnabled(enable: Boolean)
-POST        /api/user/me/game/:game/enabled        controllers.Customization.setEnabled(game: models.GameID, enable: Boolean)
+GET         /api/user/me/properties                controllers.PropertyCustomization.myProperties
+
+GET         /api/user/me/games                     controllers.GameCustomization.myGames
+POST        /api/user/me/game/all/enabled          controllers.GameCustomization.setAllEnabled(enable: Boolean)
+POST        /api/user/me/game/:game/enabled        controllers.GameCustomization.setEnabled(game: models.GameID, enable: Boolean)
