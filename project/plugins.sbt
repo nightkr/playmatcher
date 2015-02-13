@@ -1,9 +1,5 @@
 //logLevel := Level.Warn
 
-lazy val handlebarsPlugin = RootProject(file("lib/sbt-handlebars"))
-
-lazy val playmatcherBuild = (project in file(".")).dependsOn(handlebarsPlugin)
-
 resolvers ++= Seq(
   "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 )

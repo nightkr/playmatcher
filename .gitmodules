@@ -1,3 +1,0 @@
-[submodule "project/lib/sbt-handlebars"]
-	path = project/lib/sbt-handlebars
-	url = git://github.com/Amadeus82/sbt-handlebars.git
