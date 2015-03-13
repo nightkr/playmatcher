@@ -34,7 +34,7 @@ class Games(tag: Tag) extends IdTable[GameID, Game](tag, "games") {
 
 object Games extends TableQuery[Games](new Games(_)) {
   def getOrCreate(name: String, steamAppID: Option[Long], icon: Option[String])(implicit session: Session): GameID = {
-    val existingGame = this.filter(_.name === name).firstOption
+    val existingGame = this.filter(g => g.name === name || (g.steamAppID === steamAppID && steamAppID != None)).firstOption
     val game = existingGame.getOrElse(Game(None, name, steamAppID, icon))
     val updatedGame: Game = game.copy(steamAppID = game.steamAppID.orElse(steamAppID), icon = game.icon.orElse(icon))
     val id = updatedGame.id.getOrElse(this.returning(this.map(_.id)).insert(updatedGame))
