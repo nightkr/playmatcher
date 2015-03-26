@@ -12,28 +12,51 @@ class SteamAPI(app: Application) {
   private val ws = WS.client(app)
   private val apiKey = app.configuration.getString("steam.key")
   private val urlBase = "http://api.steampowered.com"
+  private val bigpicUrlBase = "http://store.steampowered.com/api"
 
-  def withApiKey[T](f: String => Future[Seq[T]]): Future[Seq[T]] = {
+  private def withApiKey[T](f: String => Future[Seq[T]]): Future[Seq[T]] = {
     apiKey.map(f).getOrElse {
       Logger.warn("Tried to access Steam API, but no key was set in local.conf")
       Future(Seq())
     }
   }
 
+  private def bigpicGameDetails(appids: Seq[Long]): Future[Map[Long, JsObject]] = {
+    val rq = ws.url(s"$bigpicUrlBase/appdetails/").withQueryString(
+      "appids" -> appids.mkString(","),
+      "filters" -> "categories"
+    ).get()
+    rq.map(_.json.as[Seq[(String, JsObject)]].flatMap { case (appid, obj) =>
+      if ((obj \ "success").as[Boolean])
+        Some((appid.toLong, (obj \ "data").as[JsObject]))
+      else None
+    }.toMap)
+  }
+
   case class User(steamid: Long) {
     def games(): Future[Seq[SteamGame]] = withApiKey { apiKey =>
-      val url = ws.url(s"$urlBase/IPlayerService/GetOwnedGames/v0001/").withQueryString(
+      val rq = ws.url(s"$urlBase/IPlayerService/GetOwnedGames/v0001/").withQueryString(
         "key" -> apiKey,
         "steamid" -> steamid.toString,
         "include_appinfo" -> "1",
         "format" -> "json"
+      ).get()
+      val bigpicRq = ws.url(s"$bigpicUrlBase/appdetails/").withQueryString(
+
       )
-      val rq = url.get()
-      rq.map(_.json \ "response" \ "games").map(_.as[Seq[JsValue]].map(game => SteamGame(
+      for {
+        games <- rq.map(_.json \ "response" \ "games").map(_.as[Seq[JsValue]])
+      } yield games.map(game => SteamGame(
+        (game \ "appid").as[Long],
+        (game \ "name").as[String],
+        (game \ "img_icon_url").as[String],
+        Seq()
+      ))
+      /*val req = .map(game => SteamGame(
         (game \ "appid").as[Long],
         (game \ "name").as[String],
         (game \ "img_icon_url").as[String]
-      )))
+      )))*/
     }
 
     def summary(): Future[Option[SteamPlayerSummary]] = withApiKey { apiKey =>
@@ -54,7 +77,7 @@ class SteamAPI(app: Application) {
 object SteamAPI extends PerApplicationCompanion[SteamAPI] {
   override def create(app: Application): SteamAPI = new SteamAPI(app)
 
-  case class SteamGame(appid: Long, name: String, icon: String) {
+  case class SteamGame(appid: Long, name: String, icon: String, categories: Seq[(Int, String)]) {
     def iconPath = s"http://media.steampowered.com/steamcommunity/public/images/apps/$appid/$icon.jpg"
   }
 
