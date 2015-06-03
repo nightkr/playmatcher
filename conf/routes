@@ -11,8 +11,8 @@ GET         /assets/*file                          controllers.Assets.at(path="/
 GET         /match                                 controllers.Application.connect
 GET         /connect                               controllers.Application.connectWS
 
-GET         /login/steam                           controllers.SteamAuthentication.steamLogin(returnTo: Option[String] ?= None)
-GET         /login/steam/callback                  controllers.SteamAuthentication.steamCallback(returnTo)
+GET         /login/steam                           controllers.SteamAuthentication.steamLogin()
+GET         /login/steam/callback                  controllers.SteamAuthentication.steamCallback()
 
 GET         /logout                                controllers.Application.logOut
 
