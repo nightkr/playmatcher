@@ -63,11 +63,8 @@ object Application extends Controller {
 object SteamAuthentication extends Controller {
   private val steamOpenID = "http://steamcommunity.com/openid"
 
-  def steamLogin(returnTo: Option[String]) = Action.async { implicit request =>
-    val realReturnTo = returnTo
-      .orElse(request.headers.get("Referer"))
-      .getOrElse(routes.Application.index().url)
-    SteamOpenID().redirectURL(steamOpenID, routes.SteamAuthentication.steamCallback(realReturnTo).absoluteURL(), realm = openIDRealm)
+  def steamLogin = Action.async { implicit request =>
+    SteamOpenID().redirectURL(steamOpenID, routes.SteamAuthentication.steamCallback.absoluteURL(), realm = openIDRealm)
       .map(TemporaryRedirect)
       .recover { case ex: Throwable =>
       Logger.error("OpenID redirect retrieval failed", ex)
@@ -78,7 +75,7 @@ object SteamAuthentication extends Controller {
 
   private def openIDRealm(implicit req: RequestHeader): Option[String] = Some(routes.Application.index().absoluteURL())
 
-  def steamCallback(returnTo: String) = Action.async { implicit request =>
+  def steamCallback = Action.async { implicit request =>
     SteamOpenID().verifiedId.map(Some.apply).recover { case ex: Throwable =>
       Logger.error(s"OpenID verification failed: ${request.uri}", ex)
       None
@@ -102,13 +99,13 @@ object SteamAuthentication extends Controller {
             case x => s", and $x new games have been imported"
           })
 
-          Redirect(returnTo)
+          Redirect(routes.Application.index())
             .withUser(uid)
             .flashing("success" -> msg)
         }
       case None =>
         Future(
-          Redirect(returnTo)
+          Redirect(routes.Application.index())
             .flashing("error" -> "OpenID verification failed")
         )
     }
