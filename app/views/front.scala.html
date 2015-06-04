@@ -3,5 +3,11 @@
 @import views.html.helper.{form => _}
 
 @main("") {
-    <a href="@routes.SteamAuthentication.steamLogin(Some(routes.Application.index().url))"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>
+    <p>Yes, you have reached the wonderful world of...</p>
+
+    <h1>Playmatcher!</h1>
+
+    <p>Just click the button below to enter:</p>
+
+    <a href="@routes.SteamAuthentication.steamLogin()"><img src="http://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_large_border.png"/></a>
 }

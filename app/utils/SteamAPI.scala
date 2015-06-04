@@ -2,6 +2,7 @@ package utils
 
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json._
+import play.api.libs.json.Reads._
 import play.api.libs.ws.WS
 import play.api.{Application, Logger}
 import utils.SteamAPI.{SteamGame, SteamPlayerSummary}
@@ -26,7 +27,7 @@ class SteamAPI(app: Application) {
       "appids" -> appids.mkString(","),
       "filters" -> "categories"
     ).get()
-    rq.map(_.json.as[Seq[(String, JsObject)]].flatMap { case (appid, obj) =>
+    rq.map(_.json.as[Map[String, JsObject]]/*(Reads.seq[(String, JsObject)])*/.flatMap { case (appid, obj) =>
       if ((obj \ "success").as[Boolean])
         Some((appid.toLong, (obj \ "data").as[JsObject]))
       else None

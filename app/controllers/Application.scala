@@ -68,7 +68,7 @@ object SteamAuthentication extends Controller {
       .map(TemporaryRedirect)
       .recover { case ex: Throwable =>
       Logger.error("OpenID redirect retrieval failed", ex)
-      Redirect(realReturnTo)
+      Redirect(routes.Application.index())
         .flashing("error" -> "OpenID authentication failed")
     }
   }
